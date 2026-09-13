@@ -1,0 +1,21 @@
+{
+  "name": "render-up-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal Express TODO REST API for Render deployment testing",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "validate": "node --check src/server.js && node --check src/app.js && node --check src/models/Todo.js && node --check src/routes/todos.js && node --check src/middleware/errorHandler.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "mongoose": "^8.18.0"
+  }
+}
