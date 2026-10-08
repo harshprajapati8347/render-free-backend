@@ -1,6 +1,8 @@
 # Minimal Node.js API
 
-A small Express REST API example that runs locally, in Docker, or on Render. It has no database; add MongoDB/Mongoose only when an endpoint needs persistent data.
+A minimal Node.js + Express backend hosted **free on Render**, using **UptimeRobot** and **GitHub Actions** to keep it running.
+
+The project is intentionally simple and can be used as a starting point for small JavaScript backend projects.
 
 ## Run locally
 
@@ -11,16 +13,16 @@ npm install
 npm start
 ```
 
-The server uses `PORT` when set, otherwise port `3000`. No environment variables are required for local development. Set `PORT` in the host environment to use a different port.
+The server uses `PORT` when set, otherwise port `3000`.
 
 ## Endpoints
 
-| Method | Path | Response |
-| ------ | ---- | -------- |
-| `GET` | `/healthz` | `200` `{ "status": "ok" }` |
-| `GET` | `/api` | `200` `{ "message": "Hello from Express" }` |
+| Method | Path       | Response                                    |
+| ------ | ---------- | ------------------------------------------- |
+| `GET`  | `/healthz` | `200` `{ "status": "ok" }`                  |
+| `GET`  | `/api`     | `200` `{ "message": "Hello from Express" }` |
 
-Add API endpoints in `src/app.js`. `/healthz` is a lightweight process health check and does not depend on a database.
+Add API endpoints in `src/app.js`.
 
 ## Docker
 
@@ -29,22 +31,68 @@ docker build -t minimal-node-api .
 docker run --rm -p 3000:3000 minimal-node-api
 ```
 
-## Render
+## Free Render Hosting
 
-Create a Web Service from the Git repository and select the Docker runtime. Render builds the included `Dockerfile` and provides `PORT`. Set the health check path to `/healthz`. No database or other environment variables are needed for this example.
+Create a Web Service on Render from this GitHub repository and select the **Docker** runtime.
 
-## Keep-alive
+Render provides the `PORT` environment variable automatically.
 
-The application does not ping itself.
+Set the Render health check path to:
 
-GitHub Actions periodically requests `/healthz` to keep the Render service active during the day. The scheduled workflow runs every 5 minutes and only sends the health check between **6:00 AM and 1:00 AM IST**.
+```text
+/healthz
+```
 
-During the **1:00 AM–6:00 AM IST** window, the workflow skips the health check so the Render service can spin down naturally.
+No database or additional environment variables are required.
 
-Add the following GitHub repository secret:
+## Keep Render Running
+
+Render's free service can spin down when there is no traffic.
+
+This project uses two external mechanisms to keep the backend available:
+
+### UptimeRobot
+
+Create an HTTP monitor for:
+
+```text
+https://<your-service>.onrender.com/healthz
+```
+
+UptimeRobot periodically requests the `/healthz` endpoint, generating traffic to the Render service.
+
+### GitHub Actions
+
+GitHub Actions provides an additional scheduled keep-alive mechanism.
+
+The workflow in `.github/ci-cd.yml` runs periodically and requests `/healthz` during the desired active hours.
+
+The application itself does **not** ping itself. The `/healthz` endpoint is simply exposed so external services can check the running backend.
+
+## GitHub Secret
+
+Add this repository secret:
 
 ```text
 RENDER_HEALTH_URL=https://<your-service>.onrender.com/healthz
 ```
 
-The keep-alive logic is implemented in `.github/ci-cd.yml`; no keep-alive code is required in the Node.js application.
+The GitHub Actions workflow uses this URL for the scheduled health check.
+
+## Project Structure
+
+```text
+.
+├── .github/
+│   └── ci-cd.yml
+├── src/
+│   ├── app.js
+│   └── server.js
+├── Dockerfile
+├── package.json
+└── README.md
+```
+
+## Key Idea
+
+**Minimal Node.js + Express backend hosted free on Render using UptimeRobot and GitHub Actions to keep it running.**
