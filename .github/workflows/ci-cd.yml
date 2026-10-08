@@ -4,12 +4,16 @@ on:
   push:
     branches: [main]
 
+  schedule:
+    - cron: "*/5 * * * *"
+
 permissions:
   contents: read
   packages: write
 
 jobs:
   build-and-deploy:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -55,3 +59,30 @@ jobs:
             exit 1
           fi
           curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+
+  keep-alive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep Render service awake
+        env:
+          HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL }}
+        run: |
+          HOUR=$(TZ=Asia/Kolkata date +%H)
+          MINUTE=$(TZ=Asia/Kolkata date +%M)
+
+          CURRENT_MINUTES=$((10#$HOUR * 60 + 10#$MINUTE))
+
+          # Keep Render awake from 06:00 AM to 01:00 AM IST.
+          # Skip requests from 01:00 AM to 06:00 AM IST.
+          if [ "$CURRENT_MINUTES" -ge 360 ] || [ "$CURRENT_MINUTES" -lt 60 ]; then
+            if [ -z "$HEALTH_URL" ]; then
+              echo "RENDER_HEALTH_URL secret is not set"
+              exit 1
+            fi
+
+            echo "Pinging Render health endpoint..."
+            curl -fsS "$HEALTH_URL"
+          else
+            echo "Night window (01:00 AM–06:00 AM IST). Skipping health check."
+          fi
